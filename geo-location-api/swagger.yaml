@@ -1,0 +1,185 @@
+openapi: 3.0.0
+info:
+  title: GeoLocation API
+  version: 1.0.0
+  description: API untuk mengelola data lokasi geografis dengan autentikasi JWT.
+
+servers:
+  - url: http://localhost:5000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Location:
+      type: object
+      required:
+        - name
+        - latitude
+        - longitude
+        - category
+      properties:
+        name:
+          type: string
+        latitude:
+          type: number
+          example: -6.914744
+        longitude:
+          type: number
+          example: 107.609810
+        description:
+          type: string
+          example: Lokasi di pusat kota Bandung
+        category:
+          type: string
+          example: Kampus
+    User:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register user baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User berhasil didaftarkan
+        '400':
+          description: Username sudah digunakan
+
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user untuk mendapatkan JWT Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Login berhasil, token dikembalikan
+        '401':
+          description: Kredensial salah
+
+  /api/locations:
+    get:
+      tags:
+        - Locations
+      summary: Ambil semua lokasi
+      responses:
+        '200':
+          description: Daftar semua lokasi
+    post:
+      tags:
+        - Locations
+      summary: Tambah lokasi baru
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        '201':
+          description: Lokasi berhasil ditambahkan
+        '401':
+          description: Token tidak valid atau tidak ada
+
+  /api/locations/search:
+    get:
+      tags:
+        - Locations
+      summary: Cari lokasi berdasarkan kategori
+      parameters:
+        - name: category
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Hasil pencarian lokasi berdasarkan kategori
+
+  /api/locations/{id}:
+    get:
+      tags:
+        - Locations
+      summary: Ambil lokasi berdasarkan ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lokasi ditemukan
+        '404':
+          description: Lokasi tidak ditemukan
+    put:
+      tags:
+        - Locations
+      summary: Update lokasi berdasarkan ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        '200':
+          description: Lokasi berhasil diperbarui
+        '404':
+          description: Lokasi tidak ditemukan
+    delete:
+      tags:
+        - Locations
+      summary: Hapus lokasi berdasarkan ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lokasi berhasil dihapus
+        '404':
+          description: Lokasi tidak ditemukan
